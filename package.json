@@ -2,8 +2,9 @@
   "name": "elysia",
   "version": "1.0.50",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "bun run --watch src/index.ts"
+    "dev": "bun run --watch src/index.ts",
+    "start": "bun run dist/index.js",
+    "build": "bun build src/index.ts --outdir dist --target bun"
   },
   "dependencies": {
     "@elysiajs/cookie": "^0.8.0",
