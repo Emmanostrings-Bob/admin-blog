@@ -1,7 +1,7 @@
 import { betterAuth } from "better-auth";
 import { MongoClient } from "mongodb";
 import { mongodbAdapter } from "better-auth/adapters/mongodb";
-import { admin } from "better-auth/plugins";
+import { admin, openAPI } from "better-auth/plugins"; // ✅ add openAPI plugin
 import { Elysia, t } from "elysia";
 import dotenv from "dotenv";
 import User from "./models/User";
@@ -11,7 +11,7 @@ dotenv.config();
 await connectDB();
 
 const client = new MongoClient(process.env.MONGODB_URI!);
-const db = client.db(); 
+const db = client.db();
 const usersCollection = db.collection("users");
 
 export const auth = betterAuth({
@@ -59,6 +59,7 @@ export const auth = betterAuth({
       adminUserIds: [],
       enableAdminApi: true,
     }),
+    openAPI(),
   ],
 
   events: {
@@ -68,7 +69,7 @@ export const auth = betterAuth({
         const role = isAdmin ? "admin" : "user";
 
         await usersCollection.updateOne(
-          { _id: user.id as any},
+          { _id: user.id as any },
           { $set: { role } },
           { upsert: true }
         );
@@ -85,12 +86,9 @@ export const auth = betterAuth({
       }
     },
 
-    // 👇 This actually runs after registration
     async afterRegister({ user, response }: any) {
       const isAdmin = user.email?.toLowerCase() === "admin@blog.com";
       const role = isAdmin ? "admin" : "user";
-
-      // Force include role in response
       response.user = { ...response.user, role };
       console.log(`🎯 Role "${role}" included in signup response`);
     },
