@@ -17,26 +17,27 @@ const PORT = process.env.PORT || 3000;
 
 async function startServer() {
   try {
-    console.log("⏳ Connecting to MongoDB...");
+    console.log(" Connecting to MongoDB...");
     await mongoose.connect(MONGO_URI);
     console.log("✅ MongoDB connected successfully");
 
     const app = new Elysia()
       .use(swagger())
       .use(betterAuthPlugin)
+      .get("/", () => "Welcome to this Blog API")
       .use(requireAuth)
-      .get("/profile", ({ user }) => user)
       .use(userRoutes)
       .use(userPostRoutes)
       .use(postRoutes)
       .use(adminRoutes)
-      .get("/", () => "Welcome to this Blog API")
       .get("/user", ({ user, session }) => ({ user, session }), { auth: true })
       .listen(PORT);
 
-    console.log(`🦊 Elysia running at http://${app.server?.hostname}:${app.server?.port}`);
+    console.log(
+      `🦊 Elysia running at http://${app.server?.hostname}:${app.server?.port}`
+    );
   } catch (err) {
-    console.error("❌ MongoDB connection error:", err);
+    console.error(" MongoDB connection error:", err);
     process.exit(1);
   }
 }

@@ -3,7 +3,7 @@ import mongoose, { Schema, Document } from "mongoose";
 export interface IPost extends Document {
   title: string;
   content: string;
-  userId: string; // still store reference to user's ID
+  userId: string; 
 }
 
 const postSchema = new Schema<IPost>(
