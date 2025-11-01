@@ -22,10 +22,8 @@ export const requireAdminGuard = async (ctx: Context) => {
   ctx.user = { id: session.user.id, email: session.user.email, role };
   ctx.session = session.session;
 };
-
 export const requireAdmin = (app: Elysia) =>
-  app.derive(async (ctx: Context) => {
-    const { request, set } = ctx;
+  app.onBeforeHandle(async ({ request, set }) => {
     const session = await auth.api.getSession({ headers: request.headers });
 
     if (!session) {
@@ -34,13 +32,12 @@ export const requireAdmin = (app: Elysia) =>
     }
 
     const userDoc = await User.findById(session.user.id).lean();
-    const role = userDoc?.role || (session.user.role as "admin" | "user") || "user";
+    const dbRole = userDoc?.role;
+    const sessionRole = session.user.role;
+    const role = dbRole || sessionRole || "user";
 
     if (role !== "admin") {
       set.status = 403;
-      return { error: "Access denied. Admins only." };
+      throw new Error("Access denied. Admins only.");
     }
-
-    ctx.user = { id: session.user.id, email: session.user.email, role };
-    ctx.session = session.session;
   });

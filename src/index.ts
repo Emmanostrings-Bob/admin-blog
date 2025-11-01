@@ -21,24 +21,35 @@ async function startServer() {
     await mongoose.connect(MONGO_URI);
     console.log("✅ MongoDB connected successfully");
 
+    // 🧩 Generate the OpenAPI schema from BetterAuth
     const betterAuthSchema = await auth.api.generateOpenAPISchema();
 
-    const paths = (betterAuthSchema as any)?.paths ?? {};
+    // ✅ Prefix BetterAuth paths with `/auth/api`
+    const rawPaths = (betterAuthSchema as any)?.paths ?? {};
+    const prefixedPaths: Record<string, any> = {};
+
+    for (const [path, schema] of Object.entries(rawPaths)) {
+      prefixedPaths[`/auth/api${path}`] = schema;
+    }
+
     const components = (betterAuthSchema as any)?.components ?? {};
 
+    // ✅ Type-safe components with security scheme
     const safeComponents = {
       schemas: (components as any).schemas ?? {},
       securitySchemes: {
         bearerAuth: {
-          type: "http" as const, 
+          type: "http" as const,
           scheme: "bearer",
           bearerFormat: "JWT",
-          description: "Enter your access token here (without 'Bearer ' prefix)",
+          description:
+            "Enter your access token here (without 'Bearer ' prefix)",
         },
       },
     };
 
     const app = new Elysia()
+      .use(betterAuthPlugin)
       .use(
         swagger({
           documentation: {
@@ -48,12 +59,11 @@ async function startServer() {
               description:
                 "Unified API documentation for Blog routes and BetterAuth endpoints.",
             },
-            paths: paths as any,
+            paths: prefixedPaths as any,
             components: safeComponents,
           },
         })
       )
-      .use(betterAuthPlugin)
       .get("/", () => "Welcome to this Blog API")
       .use(requireAuth)
       .use(userRoutes)
